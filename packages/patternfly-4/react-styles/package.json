@@ -31,8 +31,8 @@
   },
   "license": "Apache-2.0",
   "scripts": {
-    "prebuild": "yarn build:babel",
-    "build:babel": "concurrently \"yarn build:tsd:copy\" \"yarn build:babel:cjs\" \"yarn build:babel:esm\"",
+    "prebuild": "concurrently \"yarn build:babel\" \"yarn build:tsd:copy\"",
+    "build:babel": "concurrently \"yarn build:babel:cjs\" \"yarn build:babel:esm\"",
     "build:babel:cjs": "cross-env BABEL_ENV=production:cjs babel src --out-dir dist/js",
     "build:babel:esm": "cross-env BABEL_ENV=production:esm babel src --out-dir dist/esm",
     "build:tsd:copy": "node ./scripts/copyTS.js"
