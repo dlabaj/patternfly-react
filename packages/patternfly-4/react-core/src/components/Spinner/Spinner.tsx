@@ -39,8 +39,8 @@ const Spinner:React.FunctionComponent<SpinnerProps> = (props) => {
 
     // return <div className={classes} {...props} />;
     return (
-      <div className="fa-spin" {...props}>
-        <CircleNotchIcon />
+      <div {...props}>
+        <CircleNotchIcon className="fa-spin" />
       </div>
     );
   }
