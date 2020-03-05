@@ -1,16 +1,16 @@
 import * as React from 'react';
 import { mount } from 'enzyme';
-import { DataToolbar } from '../DataToolbar';
+import { DataToolbar } from '..';
 import { DataToolbarContent } from '../DataToolbarContent';
 import { DataToolbarGroup } from '../DataToolbarGroup';
 import CloneIcon from '@patternfly/react-icons/dist/js/icons/clone-icon';
 import EditIcon from '@patternfly/react-icons/dist/js/icons/edit-icon';
 import FilterIcon from '@patternfly/react-icons/dist/js/icons/filter-icon';
-import { Button } from '../../../components/Button';
+import { Button } from '../../Button';
 import { DataToolbarItem } from '../DataToolbarItem';
-import { DataToolbarFilter } from '../DataToolbarFilter';
+import { DataToolbarChip, DataToolbarChipGroup, DataToolbarFilter } from '../DataToolbarFilter';
 import { DataToolbarToggleGroup } from '../DataToolbarToggleGroup';
-import { Select, SelectOption, SelectVariant } from '../../../components/Select';
+import { Select, SelectOption, SelectVariant } from '../../Select';
 
 describe('data toolbar', () => {
   test('DataToolbarOneContent', () => {
@@ -107,8 +107,8 @@ describe('data toolbar', () => {
 
   test('DataToolbarFilter', () => {
     const filters = {
-      risk: ['Low'],
-      status: ['New', 'Pending']
+      risk: [{ key: 'risk1', node: 'Low' }],
+      status: [{ key: 'status_1', node: 'New' }, { key: 'status_2', node: 'Pending' }]
     };
 
     const statusOptions = [{ value: 'Running', disabled: false }, { value: 'Cancelled', disabled: false }];
@@ -119,14 +119,19 @@ describe('data toolbar', () => {
     const onRiskToggle = () => {};
     const onStatusSelect = () => {};
     const onRiskSelect = () => {};
-    const onDelete = () => {};
+    /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+    const onDelete = (type: DataToolbarChipGroup = { key: '', name: '' }) => {};
 
     const view = mount(
       <DataToolbar id="data-toolbar" className="DataToolbar-class" clearAllFilters={onDelete}>
         <DataToolbarContent className="DataToolbarContent-class">
           <DataToolbarToggleGroup toggleIcon={<FilterIcon />} breakpoint="xl">
             <DataToolbarGroup variant="filter-group">
-              <DataToolbarFilter chips={filters.status} deleteChip={onDelete} categoryName="Status">
+              <DataToolbarFilter
+                chips={filters.status}
+                deleteChip={onDelete}
+                dataToolbarCategory={{ key: 'status_category', name: 'Status' }}
+              >
                 <Select
                   variant={SelectVariant.single}
                   aria-label="Select Input"
@@ -140,7 +145,11 @@ describe('data toolbar', () => {
                   ))}
                 </Select>
               </DataToolbarFilter>
-              <DataToolbarFilter chips={filters.risk} deleteChip={onDelete} categoryName="Risk">
+              <DataToolbarFilter
+                chips={filters.risk}
+                deleteChip={onDelete}
+                dataToolbarCategory={{ key: 'risk_category', name: 'Risk' }}
+              >
                 <Select
                   variant={SelectVariant.single}
                   aria-label="Select Input"

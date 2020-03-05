@@ -1,19 +1,20 @@
 import React from 'react';
 import {
+  Button,
+  ButtonVariant,
   DataToolbar,
   DataToolbarItem,
   DataToolbarContent,
   DataToolbarFilter,
+  DataToolbarChip,
+  DataToolbarChipGroup,
   DataToolbarToggleGroup,
   DataToolbarGroup,
-  DataToolbarProps
-} from '@patternfly/react-core/dist/esm/experimental';
-import {
-  Button,
-  ButtonVariant,
+  DataToolbarProps,
   InputGroup,
   Select,
   SelectOption,
+  SelectOptionObject,
   SelectVariant,
   Dropdown,
   DropdownItem,
@@ -28,8 +29,8 @@ import CloneIcon from '@patternfly/react-icons/dist/js/icons/clone-icon';
 import SyncIcon from '@patternfly/react-icons/dist/js/icons/sync-icon';
 
 interface Filter {
-  risk: string[];
-  status: string[];
+  chips: DataToolbarChip[];
+  category: DataToolbarChipGroup;
 }
 
 interface DataToolbarState {
@@ -37,7 +38,7 @@ interface DataToolbarState {
   inputValue: string;
   statusIsExpanded: false;
   riskIsExpanded: false;
-  filters: Filter;
+  filters: Filter[];
   kebabIsOpen: false;
 }
 
@@ -49,10 +50,23 @@ export class DataToolbarDemo extends React.Component<DataToolbarProps, DataToolb
       inputValue: '',
       statusIsExpanded: false,
       riskIsExpanded: false,
-      filters: {
-        risk: ['Low'],
-        status: ['New', 'Pending']
-      },
+      filters: [
+        {
+          chips: [{ key: 'riskChip1', node: 'Low' }],
+          category: { key: 'riskFilter', name: 'Risk' }
+          // onStatusSelect = (event, selection) => {
+  //   this.onSelect('status', event, selection);
+  // };
+
+  // onRiskSelect = (event, selection) => {
+  //   this.onSelect('risk', event, selection);
+  // };
+        },
+        {
+          chips: [{ key: 'stutusChip1', node: 'New' }, { key: 'statusChip2', node: 'Pending' }],
+          category: { key: 'statusFilter', name: 'Status' }
+        }
+      ],
       kebabIsOpen: false
     };
   }
@@ -86,28 +100,31 @@ export class DataToolbarDemo extends React.Component<DataToolbarProps, DataToolb
     });
   };
 
-  onStatusSelect = (event, selection) => {
-    this.onSelect('status', event, selection);
-  };
+  
 
-  onRiskSelect = (event, selection) => {
-    this.onSelect('risk', event, selection);
-  };
-
-  onDelete = (type = '', id = '') => {
-    if (type) {
+  onDelete = (category: DataToolbarChipGroup, chip: DataToolbarChip) => {
+    if (category) {
       this.setState(prevState => {
-        prevState.filters[type.toLowerCase()] = prevState.filters[type.toLowerCase()].filter(s => s !== id);
-        return {
-          filters: prevState.filters
-        };
+        const prevFilterIndex = prevState.filters.findIndex((filter) => (filter.category.key === category.key));
+        if (prevFilterIndex > -1) {
+          prevState.filters[prevFilterIndex].chips = prevState.filters[prevFilterIndex].chips.filter(currentChip => (currentChip !== chip));
+          return {
+            filters: prevState.filters
+          };
+        }
       });
     } else {
       this.setState({
-        filters: {
-          risk: [],
-          status: []
-        }
+        filters: [
+          {
+            chips: [],
+            category: { key: 'riskFilter', name: 'Risk' }
+          },
+          {
+            chips: [],
+            category: { key: 'statusFilter', name: 'Status' }
+          }
+        ]
       });
     }
   };
@@ -133,6 +150,9 @@ export class DataToolbarDemo extends React.Component<DataToolbarProps, DataToolb
   componentDidMount() {
     window.addEventListener('resize', this.closeExpandableContent);
   }
+
+  getSelections = chips => (chips.map(chip => chip.node.toString()));
+
 
   render() {
     const { inputValue, filters, statusIsExpanded, riskIsExpanded, kebabIsOpen } = this.state;
@@ -168,6 +188,23 @@ export class DataToolbarDemo extends React.Component<DataToolbarProps, DataToolb
           </InputGroup>
         </DataToolbarItem>
         <DataToolbarGroup variant="filter-group" id="toolbar-demo-filters">
+          {filters.map((filter: Filter) => {
+            (
+            <DataToolbarFilter chips={filter.chips} deleteChip={this.onDelete} dataToolbarCategory={filter.category}>
+              <Select
+              variant={SelectVariant.checkbox}
+              aria-label={filter.category.name}
+              onToggle={this.onStatusToggle}
+              onSelect={this.onStatusSelect}
+              selections={this.getSelections(filter.chips)}
+              isExpanded={statusIsExpanded}
+              placeholderText="Status"
+            >
+              {statusMenuItems}
+            </Select>
+            </DataToolbarFilter>);
+          })
+          }}
           <DataToolbarFilter chips={filters.status} deleteChip={this.onDelete} categoryName="Status">
             <Select
               variant={SelectVariant.checkbox}

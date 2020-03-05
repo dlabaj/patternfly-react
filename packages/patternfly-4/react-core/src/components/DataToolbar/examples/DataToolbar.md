@@ -606,10 +606,14 @@ class DataToolbarWithFilterExample extends React.Component {
       inputValue: "",
       statusIsExpanded: false,
       riskIsExpanded: false,
-      filters: {
-        risk: ['Low'],
-        status: ['New', 'Pending'],
-      },
+      filters: [{
+          chips: [{key: 'riskChip1', node: 'Low'}],
+          category: {key: 'riskFilter', name: 'Risk'}
+        },
+        {
+          chips: [{key: 'stutusChip1', node: 'New'}, {key: 'statusChip2', node: 'Pending'}], 
+          category: {key: 'statusFilter', name: 'Status'}
+      }],
       kebabIsOpen: false
     };
 
@@ -632,7 +636,8 @@ class DataToolbarWithFilterExample extends React.Component {
     this.onSelect = (type, event, selection) => {
       const checked = event.target.checked;
       this.setState((prevState) => {
-        const prevSelections = prevState.filters[type];
+        debugger;
+        const prevSelections = prevState.filters[category][key];
         return {
           filters: {
             ...prevState.filters,
@@ -652,20 +657,24 @@ class DataToolbarWithFilterExample extends React.Component {
       this.onSelect('risk', event, selection);
     };
 
-    this.onDelete = (type = "", id = "") => {
-      if (type) {
+    this.onDelete = (category, chip) => {
+      if (category) {
         this.setState((prevState) => {
-          prevState.filters[type.toLowerCase()] = prevState.filters[type.toLowerCase()].filter(s => s !== id);
+          prevState.filters[category][key] = prevState.filters[category][key].filter(filteredChip => filteredChip.key !== chip.key);
           return {
             filters: prevState.filters,
           }
         });
       } else {
         this.setState({
-          filters: {
-            risk: [],
-            status: [],
-          }
+          filters: [{
+          chips: [],
+          category: {key: 'riskFilter', name: 'Risk'}
+        },
+        {
+          chips: [],
+          category: {key: 'statusFilter', name: 'Status'}
+        }]
         })
       }
     };
