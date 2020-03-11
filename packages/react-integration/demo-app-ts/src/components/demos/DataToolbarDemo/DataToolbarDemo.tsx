@@ -8,6 +8,8 @@ import {
   DataToolbarFilter,
   DataToolbarToggleGroup,
   DataToolbarGroup,
+  DataToolbarChip,
+  DataToolbarChipGroup,
   DataToolbarProps,
   InputGroup,
   Select,
@@ -26,17 +28,16 @@ import CloneIcon from '@patternfly/react-icons/dist/js/icons/clone-icon';
 import SyncIcon from '@patternfly/react-icons/dist/js/icons/sync-icon';
 
 interface Filter {
-  risk: string[];
-  status: string[];
+  group: DataToolbarChipGroup;
+  chips: DataToolbarChip[];
 }
 
 interface DataToolbarState {
   isExpanded: boolean;
   inputValue: string;
-  statusIsExpanded: false;
-  riskIsExpanded: false;
-  filters: Filter;
-  kebabIsOpen: false;
+  filterIsExpanded: boolean[];
+  filters: Filter[];
+  kebabIsOpen: boolean;
 }
 
 export class DataToolbarDemo extends React.Component<DataToolbarProps, DataToolbarState> {
@@ -45,12 +46,18 @@ export class DataToolbarDemo extends React.Component<DataToolbarProps, DataToolb
     this.state = {
       isExpanded: false,
       inputValue: '',
-      statusIsExpanded: false,
-      riskIsExpanded: false,
-      filters: {
-        risk: ['Low'],
-        status: ['New', 'Pending']
-      },
+      filterIsExpanded: [false, false],
+      filters: [
+        {
+          group: { key: 'risk', name: 'Risk' },
+          chips: [{ key: 'riskLow', node: 'Low' }]
+        },
+
+        {
+          group: { key: 'status', name: 'Status' },
+          chips: [{ key: 'statusNew', node: 'New' }, { key: 'statusPending', node: 'Pending' }]
+        }
+      ],
       kebabIsOpen: false
     };
   }
@@ -71,55 +78,11 @@ export class DataToolbarDemo extends React.Component<DataToolbarProps, DataToolb
     this.setState({ inputValue: newValue });
   };
 
-  onSelect = (type, event, selection) => {
-    const checked = event.target.checked;
-    this.setState(prevState => {
-      const prevSelections = prevState.filters[type];
-      return {
-        filters: {
-          ...prevState.filters,
-          [type]: checked ? [...prevSelections, selection] : prevSelections.filter(value => value !== selection)
-        }
-      };
-    });
-  };
-
-  onStatusSelect = (event, selection) => {
-    this.onSelect('status', event, selection);
-  };
-
-  onRiskSelect = (event, selection) => {
-    this.onSelect('risk', event, selection);
-  };
-
-  onDelete = (type = '', id = '') => {
-    if (type) {
-      this.setState(prevState => {
-        prevState.filters[type.toLowerCase()] = prevState.filters[type.toLowerCase()].filter(s => s !== id);
-        return {
-          filters: prevState.filters
-        };
-      });
-    } else {
-      this.setState({
-        filters: {
-          risk: [],
-          status: []
-        }
-      });
-    }
-  };
-
-  onStatusToggle = isExpanded => {
-    this.setState({
-      statusIsExpanded: isExpanded
-    });
-  };
-
-  onRiskToggle = isExpanded => {
-    this.setState({
-      riskIsExpanded: isExpanded
-    });
+  onDelete = (group: DataToolbarChipGroup, chip: DataToolbarChip) => {
+    const filters: Filter[] = this.state.filters;
+    const groupFilterIndex = filters.findIndex(filter => filter.group.key === group.key);
+    filters[groupFilterIndex].chips.filter(currentChip => currentChip.key === chip.key);
+    this.setState({ filters });
   };
 
   onKebabToggle = isOpen => {
@@ -133,19 +96,20 @@ export class DataToolbarDemo extends React.Component<DataToolbarProps, DataToolb
   }
 
   render() {
-    const { inputValue, filters, statusIsExpanded, riskIsExpanded, kebabIsOpen } = this.state;
+    const { inputValue, filterIsExpanded, kebabIsOpen } = this.state;
 
-    const statusMenuItems = [
-      <SelectOption key="statusNew" value="New" />,
-      <SelectOption key="statusPending" value="Pending" />,
-      <SelectOption key="statusRunning" value="Running" />,
-      <SelectOption key="statusCancelled" value="Cancelled" />
-    ];
-
-    const riskMenuItems = [
-      <SelectOption key="riskLow" value="Low" />,
-      <SelectOption key="riskMedium" value="Medium" />,
-      <SelectOption key="riskHigh" value="High" />
+    const FilterMenuItems = [
+      [
+        <SelectOption key="riskLow" value="Low" />,
+        <SelectOption key="riskMedium" value="Medium" />,
+        <SelectOption key="riskHigh" value="High" />
+      ],
+      [
+        <SelectOption key="statusNew" value="New" />,
+        <SelectOption key="statusPending" value="Pending" />,
+        <SelectOption key="statusRunning" value="Running" />,
+        <SelectOption key="statusCancelled" value="Cancelled" />
+      ]
     ];
 
     const toggleGroupItems = (
@@ -166,32 +130,43 @@ export class DataToolbarDemo extends React.Component<DataToolbarProps, DataToolb
           </InputGroup>
         </DataToolbarItem>
         <DataToolbarGroup variant="filter-group" id="toolbar-demo-filters">
-          <DataToolbarFilter chips={filters.status} deleteChip={this.onDelete} categoryName="Status">
-            <Select
-              variant={SelectVariant.checkbox}
-              aria-label="Status"
-              onToggle={this.onStatusToggle}
-              onSelect={this.onStatusSelect}
-              selections={filters.status}
-              isExpanded={statusIsExpanded}
-              placeholderText="Status"
-            >
-              {statusMenuItems}
-            </Select>
-          </DataToolbarFilter>
-          <DataToolbarFilter chips={filters.risk} deleteChip={this.onDelete} categoryName="Risk">
-            <Select
-              variant={SelectVariant.checkbox}
-              aria-label="Risk"
-              onToggle={this.onRiskToggle}
-              onSelect={this.onRiskSelect}
-              selections={filters.risk}
-              isExpanded={riskIsExpanded}
-              placeholderText="Risk"
-            >
-              {riskMenuItems}
-            </Select>
-          </DataToolbarFilter>
+          {FilterMenuItems.map((value: any[], index: number) => {
+            const currentFilter = this.state.filters[index];
+            return (
+              <DataToolbarFilter
+                key={currentFilter.group.key}
+                chips={currentFilter.chips}
+                deleteChip={this.onDelete}
+                categoryName={currentFilter.group}
+              >
+                <Select
+                  variant={SelectVariant.checkbox}
+                  aria-label={currentFilter.group.name}
+                  onToggle={isExpanded => {
+                    const newFilterIsExpanded: boolean[] = this.state.filterIsExpanded;
+                    newFilterIsExpanded[index] = isExpanded;
+                    this.setState({ filterIsExpanded: newFilterIsExpanded });
+                  }}
+                  onSelect={(event: any, selection) => {
+                    const checked: boolean = event.target.checked;
+                    const newFilter: Filter = this.state.filters[index];
+
+                    newFilter.chips = checked
+                      ? [...newFilter.chips, { key: `${newFilter.group.name}${selection}`, node: selection }]
+                      : currentFilter.chips.filter(chip => chip.node !== selection);
+                    const newFilters = this.state.filters;
+                    newFilters[index] = currentFilter;
+                    this.setState({ filters: newFilters });
+                  }}
+                  selections={currentFilter.chips.map((chip: DataToolbarChip) => chip.node)}
+                  isExpanded={filterIsExpanded[index]}
+                  placeholderText={currentFilter.group.name}
+                >
+                  {value}
+                </Select>
+              </DataToolbarFilter>
+            );
+          })}
         </DataToolbarGroup>
       </React.Fragment>
     );
@@ -250,7 +225,20 @@ export class DataToolbarDemo extends React.Component<DataToolbarProps, DataToolb
     return (
       <DataToolbar
         id="data-toolbar-filter-demo"
-        clearAllFilters={this.onDelete}
+        clearAllFilters={() => {
+          this.setState({
+            filters: [
+              {
+                group: { key: 'risk', name: 'Risk' },
+                chips: []
+              },
+              {
+                group: { key: 'status', name: 'Status' },
+                chips: []
+              }
+            ]
+          });
+        }}
         className="pf-m-toggle-group-container"
         collapseListedFiltersBreakpoint="xl"
         clearFiltersButtonText="Clear filters"
